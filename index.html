@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Role Permissions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #6D01D1;
+  --purple-light: #F3E8FF;
+  --purple-hover: #5A01B0;
+  --purple-bg: #FAF5FF;
+  --bg: #F8F9FA;
+  --card: #FFFFFF;
+  --border: #E5E7EB;
+  --border-light: #F0F0F0;
+  --text: #1F2937;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.view-switcher {
+  display: flex;
+  gap: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.view-btn:hover { color: var(--text-secondary); background: var(--bg); }
+.view-btn.active { color: var(--purple); background: var(--purple-light); }
+.view-btn svg { width: 18px; height: 18px; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+/* Summary bar */
+.summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.summary-count {
+  font-weight: 600;
+  color: var(--purple);
+}
+
+/* Search bar */
+.search-bar {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--card);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search-bar input:focus { border-color: var(--purple); }
+
+.search-bar svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+
+/* Category section */
+.category {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.category-header:hover { background: var(--bg); }
+
+.category-chevron {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.category.open .category-chevron { transform: rotate(90deg); }
+
+.category-name {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.category-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.category-count .on { color: var(--purple); font-weight: 600; }
+
+.category-body {
+  display: none;
+  border-top: 1px solid var(--border-light);
+}
+
+.category.open .category-body { display: block; }
+
+/* Permission row */
+.perm-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px 12px 46px;
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.3s;
+  gap: 12px;
+}
+
+.perm-row:last-child { border-bottom: none; }
+.perm-row.highlight { background: var(--purple-light); }
+
+.perm-info { flex: 1; min-width: 0; }
+
+.perm-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.perm-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.perm-deps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dep-pill {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dep-pill:hover { color: var(--purple); background: var(--purple-light); }
+.dep-pill.enabled { color: var(--purple); background: var(--purple-light); }
+.dep-pill.cross-category { border: 1px dashed var(--purple); }
+.dep-pill.cross-category.enabled { color: var(--purple); background: var(--purple-light); border-color: var(--purple); }
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: #D1D5DB;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle input:checked + .toggle-track { background: var(--purple); }
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+
+.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+/* Tree view */
+.tree-view { padding: 8px 0; }
+
+.tree-node {
+  position: relative;
+  padding-left: 24px;
+}
+
+.tree-node::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.tree-node:last-child::before { bottom: 50%; }
+
+.tree-node > .tree-row::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 18px;
+  width: 12px;
+  height: 1px;
+  background: var(--border);
+}
+
+.tree-root { padding-left: 0; }
+.tree-root::before { display: none; }
+.tree-root > .tree-row::before { display: none; }
+
+.tree-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px 8px 8px;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.tree-row:hover { background: var(--bg); }
+.tree-row.highlight { background: var(--purple-light); }
+
+.tree-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.tree-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+  text-align: right;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-children { }
+
+/* Search list view */
+.search-list .perm-row {
+  padding-left: 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+
+.search-list .perm-row:hover { background: var(--bg); }
+
+.cat-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--purple);
+  background: var(--purple-light);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.modal-overlay.visible { opacity: 1; pointer-events: auto; }
+
+.modal {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: var(--shadow-md);
+}
+
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.modal p { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5; }
+
+.modal-list {
+  list-style: none;
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.modal-list li {
+  font-size: 13px;
+  padding: 4px 0;
+  color: var(--text);
+}
+
+.modal-list li .cat-inline {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn:hover { background: var(--bg); }
+.btn-danger { background: #DC2626; color: white; border-color: #DC2626; }
+.btn-danger:hover { background: #B91C1C; }
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--text);
+  color: white;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  max-width: 360px;
+  animation: toastIn 0.2s ease-out, toastOut 0.2s ease-in 2.8s forwards;
+}
+
+@keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* Utility */
+.hidden { display: none !important; }
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Custom Role Permissions</h1>
+    <div class="view-switcher">
+      <button class="view-btn active" data-view="category" title="Category view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <button class="view-btn" data-view="search" title="Search & filter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="view-btn" data-view="tree" title="Dependency tree">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="20" r="2"/><circle cx="18" cy="20" r="2"/><line x1="12" y1="6" x2="6" y2="10"/><line x1="12" y1="6" x2="18" y2="10"/><line x1="6" y1="14" x2="6" y2="18"/><line x1="18" y1="14" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="org">Organization Permissions</button>
+    <button class="tab-btn" data-tab="team">Team Permissions</button>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Disable permission</h3>
+    <p id="modal-msg"></p>
+    <ul class="modal-list" id="modal-list"></ul>
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm">Disable all</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ──────────────── PERMISSION DATA ────────────────
+
+const ORG_PERMISSIONS = [
+  // Organization
+  { id: 'organization view', label: 'Organization view', category: 'Organization', requires: [], note: 'Can read organization.' },
+  { id: 'organization edit', label: 'Organization edit', category: 'Organization', requires: ['organization view'], note: 'Can modify organization.' },
+  { id: 'organization delete', label: 'Organization delete', category: 'Organization', requires: ['organization view'], note: 'Can delete organization.' },
+  { id: 'organization manage', label: 'Organization manage', category: 'Organization', requires: ['organization view', 'organization edit'], note: 'Allows to act as owner of organization.' },
+  { id: 'organization feature control manage', label: 'Organization feature control manage', category: 'Organization', requires: ['organization view'], note: 'Allows managing feature controls.' },
+  { id: 'organization credits view', label: 'Organization credits view', category: 'Organization', requires: ['organization view'], note: '' },
+  { id: 'organization users view', label: 'Organization users view', category: 'Organization', requires: ['organization view'], note: '' },
+  { id: 'organization user add and edit', label: 'Organization user add and edit', category: 'Organization', requires: ['organization users view', 'organization view'], note: 'Can modify organization users.' },
+  { id: 'organization installed apps view', label: 'Organization installed apps view', category: 'Organization', requires: ['organization view'], note: '' },
+  { id: 'organization app install', label: 'Organization app install', category: 'Organization', requires: ['organization view'], note: 'Can install App to Organization.' },
+  { id: 'custom properties structure edit', label: 'Custom properties structure edit', category: 'Organization', requires: ['organization view'], note: 'Allows editing and creating structures and items of custom properties.' },
+
+  // Members & Access
+  { id: 'sso settings', label: 'SSO settings', category: 'Members & Access', requires: ['organization view'], note: 'Allows editing or creating SSO settings.' },
+  { id: 'users sso edit', label: 'Users SSO edit', category: 'Members & Access', requires: [], note: 'Allows editing or creating SSO users.' },
+
+  // Team
+  { id: 'access all teams', label: 'Access all teams', category: 'Team', requires: ['organization view'], note: 'Can access any team with admin permissions.' },
+  { id: 'team add', label: 'Team add', category: 'Team', requires: ['organization view'], note: 'Can add team.' },
+  { id: 'team edit limits', label: 'Team edit limits', category: 'Team', requires: ['organization view'], note: 'Can set operations limit on a team.' },
+  { id: 'personal team manage', label: 'Personal team manage', category: 'Team', requires: [], note: '' },
+
+  // Payments
+  { id: 'payments get', label: 'Payments get', category: 'Payments', requires: [], note: '' },
+  { id: 'payment edit', label: 'Payment edit', category: 'Payments', requires: ['payments get'], note: '' },
+  { id: 'payment methods get', label: 'Payment methods get', category: 'Payments', requires: ['payments get'], note: 'Can access payment methods.' },
+  { id: 'payment method edit', label: 'Payment method edit', category: 'Payments', requires: ['payments get'], note: 'Can edit payment method.' },
+
+  // AI Agents
+  { id: 'agents list', label: 'Agents list', category: 'AI Agents', requires: ['organization view'], note: 'Allows browsing Agents.' },
+  { id: 'agents edit', label: 'Agents edit', category: 'AI Agents', requires: ['agents list', 'organization view'], note: 'Allows editing or creating new Agents.' },
+  { id: 'agents use', label: 'Agents use', category: 'AI Agents', requires: ['agents list', 'organization view'], note: 'Allows using Agents to create Connected Systems.' },
+  { id: 'connected systems list', label: 'Connected systems list', category: 'AI Agents', requires: ['organization view'], note: 'Allows browsing Connected Systems.' },
+  { id: 'connected systems edit', label: 'Connected systems edit', category: 'AI Agents', requires: ['connected systems list', 'organization view'], note: 'Allows editing or creating new Connected Systems.' },
+  { id: 'connected systems use', label: 'Connected systems use', category: 'AI Agents', requires: ['connected systems list', 'organization view'], note: 'Allows using Connected Systems to create Connections.' },
+
+  // Managed Organizations
+  { id: 'managed organizations get', label: 'Managed organizations get', category: 'Managed Organizations', requires: ['organization view'], note: 'Allows to see list of managed organizations.' },
+  { id: 'managed organization add', label: 'Managed organization add', category: 'Managed Organizations', requires: ['managed organizations get', 'organization view'], note: 'Allows to add new managed organization under current one.' },
+  { id: 'managed organization edit', label: 'Managed organization edit', category: 'Managed Organizations', requires: ['managed organizations get', 'organization view'], note: 'Allows to edit managed organization operation allocation.' },
+  { id: 'managed organization unlink', label: 'Managed organization unlink', category: 'Managed Organizations', requires: ['managed organizations get', 'organization view'], note: 'Allows to unlink managed organization.' },
+
+  // Templates
+  { id: 'organization templates get', label: 'Organization templates get', category: 'Templates', requires: ['organization view'], note: 'Can get information about organisation level template and its history.' },
+  { id: 'organization template view', label: 'Organization template view', category: 'Templates', requires: ['organization view'], note: 'Can view organisation level templates.' },
+  { id: 'organization template add', label: 'Organization template add', category: 'Templates', requires: ['organization templates get', 'organization view'], note: 'Can promote template to organisation level.' },
+  { id: 'organization template delete', label: 'Organization template delete', category: 'Templates', requires: ['organization templates get', 'organization template view', 'organization view'], note: 'Can delete or downgrade template from organisation level.' },
+
+  // Variables
+  { id: 'organization variables get', label: 'Organization variables get', category: 'Variables', requires: ['organization view'], note: 'Can access organization variables.' },
+  { id: 'organization variable add', label: 'Organization variable add', category: 'Variables', requires: ['organization variables get', 'organization view'], note: 'Can add organization variables.' },
+  { id: 'organization variable delete', label: 'Organization variable delete', category: 'Variables', requires: ['organization variables get', 'organization view'], note: 'Can delete organization variables.' },
+  { id: 'organization variable edit', label: 'Organization variable edit', category: 'Variables', requires: ['organization variables get', 'organization view'], note: 'Can edit organization variables.' },
+
+  // Analytics
+  { id: 'access analytics', label: 'Access analytics', category: 'Analytics', requires: ['organization view'], note: 'Allows read analytics.' },
+
+  // Audit Logs
+  { id: 'organization audit logs view', label: 'Organization audit logs view', category: 'Audit Logs', requires: ['organization view'], note: 'Allows read organization audit logs.' },
+
+  // Bridge
+  { id: 'instancer organization settings read', label: 'Instancer organization settings read', category: 'Bridge', requires: ['organization view'], note: 'Allows reading the OEM Settings of the Organization.' },
+  { id: 'instancer organization settings write', label: 'Instancer organization settings write', category: 'Bridge', requires: ['instancer organization settings read', 'organization view'], note: 'Allows modifying the OEM Settings of the Organization.' },
+  { id: 'portal application read', label: 'Portal application read', category: 'Bridge', requires: ['organization view'], note: '' },
+  { id: 'portal application write', label: 'Portal application write', category: 'Bridge', requires: ['portal application read', 'organization view'], note: '' },
+  { id: 'portal secret read', label: 'Portal secret read', category: 'Bridge', requires: ['organization view'], note: '' },
+  { id: 'portal secret write', label: 'Portal secret write', category: 'Bridge', requires: ['portal secret read', 'organization view'], note: '' },
+  { id: 'portal workspace read', label: 'Portal workspace read', category: 'Bridge', requires: ['organization view'], note: '' },
+  { id: 'portal workspace write', label: 'Portal workspace write', category: 'Bridge', requires: ['portal workspace read', 'organization view'], note: '' },
+];
+
+const TEAM_PERMISSIONS = [
+  // Scenarios
+  { id: 'scenarios get', label: 'Scenarios get', category: 'Scenarios', requires: [], note: '' },
+  { id: 'scenario view', label: 'Scenario view', category: 'Scenarios', requires: [], note: '' },
+  { id: 'scenario add', label: 'Scenario add', category: 'Scenarios', requires: ['scenarios get'], note: '' },
+  { id: 'scenario edit', label: 'Scenario edit', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+  { id: 'scenario delete', label: 'Scenario delete', category: 'Scenarios', requires: ['scenarios get', 'scenario view', 'scenario edit'], note: '' },
+  { id: 'scenario interface get', label: 'Scenario interface get', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: 'Can access scenario interface.' },
+  { id: 'scenario interface edit', label: 'Scenario interface edit', category: 'Scenarios', requires: ['scenario interface get', 'scenarios get', 'scenario view', 'scenario edit'], note: 'Can update scenario interface.' },
+  { id: 'scenario logs get', label: 'Scenario logs get', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+  { id: 'scenario notifications', label: 'Scenario notifications', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+  { id: 'scenario publish', label: 'Scenario publish', category: 'Scenarios', requires: ['scenarios get', 'scenario view', 'scenario edit'], note: 'Can publish scenarios in the team.' },
+  { id: 'scenario scheduling', label: 'Scenario scheduling', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+  { id: 'scenario start', label: 'Scenario start', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+  { id: 'scenario stop', label: 'Scenario stop', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+  { id: 'scenario verify', label: 'Scenario verify', category: 'Scenarios', requires: ['scenarios get', 'scenario view'], note: '' },
+
+  // Connections
+  { id: 'connection get', label: 'Connection get', category: 'Connections', requires: ['scenarios get'], note: '' },
+  { id: 'connection add', label: 'Connection add', category: 'Connections', requires: ['connection get', 'scenarios get'], note: '' },
+  { id: 'connection delete', label: 'Connection delete', category: 'Connections', requires: ['connection get', 'scenarios get'], note: '' },
+  { id: 'connection edit', label: 'Connection edit', category: 'Connections', requires: ['connection get', 'scenarios get'], note: '' },
+
+  // Data Stores
+  { id: 'datastores get', label: 'Datastores get', category: 'Data Stores', requires: ['scenarios get'], note: '' },
+  { id: 'datastore view', label: 'Datastore view', category: 'Data Stores', requires: ['scenarios get'], note: '' },
+  { id: 'datastore add', label: 'Datastore add', category: 'Data Stores', requires: ['datastores get', 'scenarios get'], note: '' },
+  { id: 'datastore delete', label: 'Datastore delete', category: 'Data Stores', requires: ['datastores get', 'datastore view', 'scenarios get'], note: '' },
+  { id: 'datastore edit', label: 'Datastore edit', category: 'Data Stores', requires: ['datastores get', 'datastore view', 'scenarios get'], note: '' },
+
+  // Data Structures
+  { id: 'udts get', label: 'Data structures get', category: 'Data Structures', requires: ['scenarios get'], note: '' },
+  { id: 'udt add', label: 'Data structure add', category: 'Data Structures', requires: ['udts get', 'scenarios get'], note: '' },
+  { id: 'udt delete', label: 'Data structure delete', category: 'Data Structures', requires: ['udts get', 'scenarios get'], note: '' },
+  { id: 'udt edit', label: 'Data structure edit', category: 'Data Structures', requires: ['udts get', 'scenarios get'], note: '' },
+
+  // Functions
+  { id: 'functions get', label: 'Functions get', category: 'Functions', requires: ['scenarios get'], note: '' },
+  { id: 'function add', label: 'Function add', category: 'Functions', requires: ['functions get', 'scenarios get'], note: '' },
+  { id: 'function delete', label: 'Function delete', category: 'Functions', requires: ['functions get', 'scenarios get'], note: '' },
+  { id: 'function edit', label: 'Function edit', category: 'Functions', requires: ['functions get', 'scenarios get'], note: '' },
+
+  // Webhooks
+  { id: 'hooks get', label: 'Webhooks get', category: 'Webhooks', requires: ['scenarios get'], note: '' },
+  { id: 'hook add', label: 'Webhook add', category: 'Webhooks', requires: ['hooks get', 'scenarios get'], note: '' },
+  { id: 'hook delete', label: 'Webhook delete', category: 'Webhooks', requires: ['hooks get', 'scenarios get'], note: '' },
+  { id: 'hook edit', label: 'Webhook edit', category: 'Webhooks', requires: ['hooks get', 'scenarios get'], note: '' },
+
+  // Keys
+  { id: 'keys get', label: 'Keys get', category: 'Keys', requires: ['scenarios get'], note: '' },
+  { id: 'key add', label: 'Key add', category: 'Keys', requires: ['keys get', 'scenarios get'], note: '' },
+  { id: 'key delete', label: 'Key delete', category: 'Keys', requires: ['keys get', 'scenarios get'], note: '' },
+  { id: 'key edit', label: 'Key edit', category: 'Keys', requires: ['keys get', 'scenarios get'], note: '' },
+
+  // Devices
+  { id: 'devices get', label: 'Devices get', category: 'Devices', requires: ['scenarios get'], note: '' },
+  { id: 'device add', label: 'Device add', category: 'Devices', requires: ['devices get', 'scenarios get'], note: '' },
+  { id: 'device delete', label: 'Device delete', category: 'Devices', requires: ['devices get', 'scenarios get'], note: '' },
+  { id: 'device edit', label: 'Device edit', category: 'Devices', requires: ['devices get', 'scenarios get'], note: '' },
+  { id: 'storage view', label: 'Storage view', category: 'Devices', requires: ['scenarios get'], note: '' },
+  { id: 'storage edit', label: 'Storage edit', category: 'Devices', requires: ['storage view', 'scenarios get'], note: '' },
+
+  // Incomplete Executions
+  { id: 'dlq view', label: 'Incomplete executions view', category: 'Incomplete Executions', requires: ['scenarios get'], note: '' },
+  { id: 'dlq edit', label: 'Incomplete executions edit', category: 'Incomplete Executions', requires: ['dlq view', 'scenarios get'], note: '' },
+
+  // Templates
+  { id: 'templates get', label: 'Templates get', category: 'Templates', requires: ['scenarios get'], note: '' },
+  { id: 'template view', label: 'Template view', category: 'Templates', requires: ['scenarios get'], note: '' },
+  { id: 'template add', label: 'Template add', category: 'Templates', requires: ['templates get', 'scenarios get'], note: '' },
+  { id: 'template delete', label: 'Template delete', category: 'Templates', requires: ['templates get', 'template view', 'scenarios get'], note: '' },
+  { id: 'template edit', label: 'Template edit', category: 'Templates', requires: ['templates get', 'template view', 'scenarios get'], note: '' },
+
+  // Variables
+  { id: 'team variables get', label: 'Team variables get', category: 'Variables', requires: ['scenarios get'], note: 'Can access team variables.' },
+  { id: 'team variable add', label: 'Team variable add', category: 'Variables', requires: ['team variables get', 'scenarios get'], note: 'Can add team variables.' },
+  { id: 'team variable delete', label: 'Team variable delete', category: 'Variables', requires: ['team variables get', 'scenarios get'], note: 'Can delete team variables.' },
+  { id: 'team variable edit', label: 'Team variable edit', category: 'Variables', requires: ['team variables get', 'scenarios get'], note: 'Can edit team variables.' },
+
+  // Team
+  { id: 'team view', label: 'Team view', category: 'Team', requires: [], note: '' },
+  { id: 'team edit', label: 'Team edit', category: 'Team', requires: ['team view'], note: '' },
+  { id: 'team manage', label: 'Team manage', category: 'Team', requires: ['team view', 'team edit'], note: 'Allows to act as team admin.' },
+  { id: 'team delete', label: 'Team delete', category: 'Team', requires: ['team view', 'team manage', 'team edit'], note: '' },
+  { id: 'team credits view', label: 'Team credits view', category: 'Team', requires: ['team view'], note: '' },
+  { id: 'team user add and edit', label: 'Team user add and edit', category: 'Team', requires: ['team view', 'team manage'], note: '' },
+
+  // User Management
+  { id: 'credential request own view', label: 'Credential request own view', category: 'User Management', requires: [], note: '' },
+  { id: 'connection own delete', label: 'Connection own delete', category: 'User Management', requires: ['connection get', 'scenarios get'], note: '' },
+  { id: 'key own delete', label: 'Key own delete', category: 'User Management', requires: ['keys get', 'scenarios get'], note: '' },
+
+  // LLM Configuration
+  { id: 'team llm get', label: 'Team LLM get', category: 'LLM Configuration', requires: [], note: 'Allows user to get AI/LLM configuration.' },
+  { id: 'team llm edit', label: 'Team LLM edit', category: 'LLM Configuration', requires: ['team llm get'], note: 'Allows user to manage AI/LLM configuration.' },
+
+  // MCP Hosts
+  { id: 'mcp vhosts read', label: 'MCP vHosts read', category: 'MCP Hosts', requires: ['team view', 'scenarios get'], note: 'Allows to view configuration of MCP vHosts.' },
+  { id: 'mcp vhosts write', label: 'MCP vHosts write', category: 'MCP Hosts', requires: ['mcp vhosts read', 'team view', 'scenarios get'], note: 'Allows to manage configuration of MCP vHosts.' },
+
+  // Audit Logs
+  { id: 'team audit logs view', label: 'Team audit logs view', category: 'Audit Logs', requires: ['team view'], note: 'Allows read team audit logs.' },
+
+  // Bridge
+  { id: 'credence request read', label: 'Credence request read', category: 'Bridge', requires: [], note: 'Allows user to see Credential Requests.' },
+  { id: 'credence request process', label: 'Credence request process', category: 'Bridge', requires: ['credence request read'], note: 'Allows user to process Credential Requests.' },
+  { id: 'credence request write', label: 'Credence request write', category: 'Bridge', requires: ['credence request read'], note: 'Allows user to manage Credential Requests.' },
+  { id: 'instancer components add', label: 'Instancer components add', category: 'Bridge', requires: [], note: 'Allows creation of Components through the Instancer.' },
+  { id: 'instancer flows use', label: 'Instancer flows use', category: 'Bridge', requires: [], note: 'Allows usage of the Instancer Flows.' },
+];
+
+const ORG_CATEGORY_ORDER = ['Organization', 'Members & Access', 'Team', 'Payments', 'AI Agents', 'Managed Organizations', 'Templates', 'Variables', 'Analytics', 'Audit Logs', 'Bridge'];
+const TEAM_CATEGORY_ORDER = ['Scenarios', 'Connections', 'Data Stores', 'Data Structures', 'Functions', 'Webhooks', 'Keys', 'Devices', 'Incomplete Executions', 'Templates', 'Variables', 'Team', 'User Management', 'LLM Configuration', 'MCP Hosts', 'Audit Logs', 'Bridge'];
+
+// ──────────────── STATE ────────────────
+
+let activeTab = 'org';
+let activeView = 'category';
+const state = {
+  org: Object.fromEntries(ORG_PERMISSIONS.map(p => [p.id, false])),
+  team: Object.fromEntries(TEAM_PERMISSIONS.map(p => [p.id, false])),
+};
+
+function perms() { return activeTab === 'org' ? ORG_PERMISSIONS : TEAM_PERMISSIONS; }
+function permState() { return state[activeTab]; }
+function catOrder() { return activeTab === 'org' ? ORG_CATEGORY_ORDER : TEAM_CATEGORY_ORDER; }
+function permById(id) { return perms().find(p => p.id === id); }
+
+// ──────────────── DEPENDENCY ENGINE ────────────────
+
+function buildDependentsMap(permissions) {
+  const map = {};
+  permissions.forEach(p => { map[p.id] = []; });
+  permissions.forEach(p => {
+    p.requires.forEach(req => {
+      if (map[req]) map[req].push(p.id);
+    });
+  });
+  return map;
+}
+
+function getRequiredChain(id, st, permissions) {
+  const toEnable = [];
+  const visited = new Set();
+  const queue = [id];
+  const permMap = Object.fromEntries(permissions.map(p => [p.id, p]));
+  while (queue.length) {
+    const cur = queue.shift();
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    const p = permMap[cur];
+    if (!p) continue;
+    if (!st[cur] && cur !== id) toEnable.push(cur);
+    p.requires.forEach(r => { if (!visited.has(r)) queue.push(r); });
+  }
+  return toEnable;
+}
+
+function getDependentChain(id, st, permissions) {
+  const depMap = buildDependentsMap(permissions);
+  const toDisable = [];
+  const visited = new Set();
+  const queue = [id];
+  while (queue.length) {
+    const cur = queue.shift();
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    (depMap[cur] || []).forEach(dep => {
+      if (st[dep] && !visited.has(dep)) {
+        toDisable.push(dep);
+        queue.push(dep);
+      }
+    });
+  }
+  return toDisable;
+}
+
+// ──────────────── MODAL ────────────────
+
+let modalResolve = null;
+
+function showModal(permLabel, affectedIds) {
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-msg').textContent =
+    `Disabling "${permLabel}" will also disable the following dependent permissions:`;
+  const list = document.getElementById('modal-list');
+  list.innerHTML = affectedIds.map(id => {
+    const p = permById(id);
+    return `<li>${p.label} <span class="cat-inline">(${p.category})</span></li>`;
+  }).join('');
+  modal.classList.add('visible');
+  return new Promise(resolve => { modalResolve = resolve; });
+}
+
+document.getElementById('modal-cancel').onclick = () => {
+  document.getElementById('modal').classList.remove('visible');
+  if (modalResolve) modalResolve(false);
+};
+document.getElementById('modal-confirm').onclick = () => {
+  document.getElementById('modal').classList.remove('visible');
+  if (modalResolve) modalResolve(true);
+};
+
+// ──────────────── TOAST ────────────────
+
+function showToast(msg) {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ──────────────── HIGHLIGHT ────────────────
+
+function highlightPerm(id) {
+  const el = document.querySelector(`[data-perm-id="${id}"]`);
+  if (!el) return;
+  // Expand parent category if collapsed
+  const cat = el.closest('.category');
+  if (cat && !cat.classList.contains('open')) cat.classList.add('open');
+  el.classList.add('highlight');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(() => el.classList.remove('highlight'), 1500);
+}
+
+// ──────────────── TOGGLE HANDLER ────────────────
+
+async function handleToggle(id) {
+  const st = permState();
+  const permissions = perms();
+
+  if (!st[id]) {
+    // Enabling
+    const chain = getRequiredChain(id, st, permissions);
+    st[id] = true;
+    chain.forEach(r => { st[r] = true; });
+    render();
+    chain.forEach(r => highlightPerm(r));
+    if (chain.length) {
+      const names = chain.map(r => {
+        const p = permById(r);
+        const sameCategory = p.category === permById(id).category;
+        return sameCategory ? p.label : `${p.label} (${p.category})`;
+      });
+      showToast(`Also enabled: ${names.join(', ')}`);
+    }
+  } else {
+    // Disabling
+    const deps = getDependentChain(id, st, permissions);
+    if (deps.length) {
+      const p = permById(id);
+      const confirmed = await showModal(p.label, deps);
+      if (!confirmed) { render(); return; }
+      deps.forEach(d => { st[d] = false; });
+    }
+    st[id] = false;
+    render();
+  }
+}
+
+// ──────────────── RENDERERS ────────────────
+
+function toggleHTML(id, checked) {
+  return `<label class="toggle">
+    <input type="checkbox" ${checked ? 'checked' : ''} onchange="handleToggle('${id.replace(/'/g, "\\'")}')">
+    <span class="toggle-track"></span>
+    <span class="toggle-thumb"></span>
+  </label>`;
+}
+
+function depsHTML(perm) {
+  if (!perm.requires.length) return '';
+  const st = permState();
+  const pills = perm.requires.map(r => {
+    const rp = permById(r);
+    if (!rp) return '';
+    const cross = rp.category !== perm.category;
+    const enabled = st[r];
+    return `<span class="dep-pill${cross ? ' cross-category' : ''}${enabled ? ' enabled' : ''}" onclick="highlightPerm('${r.replace(/'/g, "\\'")}')">${rp.label}</span>`;
+  }).filter(Boolean).join('');
+  return `<div class="perm-deps">${pills}</div>`;
+}
+
+function permRowHTML(p, showCategory) {
+  const st = permState();
+  return `<div class="perm-row" data-perm-id="${p.id}">
+    ${toggleHTML(p.id, st[p.id])}
+    <div class="perm-info">
+      <div class="perm-label">${p.label}</div>
+      ${p.note ? `<div class="perm-note">${p.note}</div>` : ''}
+      ${depsHTML(p)}
+    </div>
+    ${showCategory ? `<span class="cat-badge">${p.category}</span>` : ''}
+  </div>`;
+}
+
+// Category view
+function renderCategoryView() {
+  const permissions = perms();
+  const st = permState();
+  const order = catOrder();
+  const grouped = {};
+  permissions.forEach(p => {
+    if (!grouped[p.category]) grouped[p.category] = [];
+    grouped[p.category].push(p);
+  });
+
+  const cats = order.filter(c => grouped[c]);
+  return cats.map(cat => {
+    const items = grouped[cat];
+    const onCount = items.filter(p => st[p.id]).length;
+    return `<div class="category open">
+      <div class="category-header" onclick="this.parentElement.classList.toggle('open')">
+        <svg class="category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="category-name">${cat}</span>
+        <span class="category-count"><span class="on">${onCount}</span> / ${items.length}</span>
+      </div>
+      <div class="category-body">
+        ${items.map(p => permRowHTML(p, false)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Search view
+function renderSearchView() {
+  const permissions = perms();
+  return `<div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Search permissions..." oninput="filterSearch(this.value)">
+  </div>
+  <div class="search-list" id="search-list">
+    ${permissions.map(p => permRowHTML(p, true)).join('')}
+  </div>`;
+}
+
+function filterSearch(query) {
+  const q = query.toLowerCase();
+  const list = document.getElementById('search-list');
+  if (!list) return;
+  list.querySelectorAll('.perm-row').forEach(row => {
+    const id = row.dataset.permId;
+    const p = permById(id);
+    const match = !q || p.label.toLowerCase().includes(q) || p.note.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+    row.classList.toggle('hidden', !match);
+  });
+  // Show no-results
+  const existing = list.querySelector('.no-results');
+  if (existing) existing.remove();
+  const visible = list.querySelectorAll('.perm-row:not(.hidden)');
+  if (visible.length === 0 && q) {
+    list.insertAdjacentHTML('beforeend', '<div class="no-results">No permissions match your search.</div>');
+  }
+}
+
+// Tree view
+function renderTreeView() {
+  const permissions = perms();
+  const st = permState();
+
+  // Build tree: find primary parent for each node
+  const depMap = buildDependentsMap(permissions);
+  const permMap = Object.fromEntries(permissions.map(p => [p.id, p]));
+
+  // Compute depth of each permission
+  const depthCache = {};
+  function getDepth(id) {
+    if (depthCache[id] !== undefined) return depthCache[id];
+    const p = permMap[id];
+    if (!p || p.requires.length === 0) return (depthCache[id] = 0);
+    depthCache[id] = -1; // cycle guard
+    const maxReqDepth = Math.max(...p.requires.map(r => permMap[r] ? getDepth(r) : -1));
+    return (depthCache[id] = maxReqDepth + 1);
+  }
+  permissions.forEach(p => getDepth(p.id));
+
+  // For each permission, pick the parent with the greatest depth (most specific)
+  const children = {}; // parentId -> [childIds]
+  const roots = [];
+  permissions.forEach(p => { children[p.id] = []; });
+
+  permissions.forEach(p => {
+    if (p.requires.length === 0) {
+      roots.push(p.id);
+    } else {
+      // Pick most specific parent (deepest)
+      let bestParent = p.requires[0];
+      let bestDepth = -1;
+      p.requires.forEach(r => {
+        if (permMap[r]) {
+          const d = getDepth(r);
+          if (d > bestDepth) { bestDepth = d; bestParent = r; }
+        }
+      });
+      if (children[bestParent]) {
+        children[bestParent].push(p.id);
+      } else {
+        roots.push(p.id);
+      }
+    }
+  });
+
+  function renderNode(id, isRoot) {
+    const p = permMap[id];
+    if (!p) return '';
+    const kids = children[id] || [];
+    return `<div class="tree-node${isRoot ? ' tree-root' : ''}">
+      <div class="tree-row" data-perm-id="${p.id}">
+        ${toggleHTML(p.id, st[p.id])}
+        <span class="tree-label">${p.label}</span>
+        ${p.note ? `<span class="tree-note" title="${p.note}">${p.note}</span>` : ''}
+      </div>
+      ${kids.length ? `<div class="tree-children">${kids.map(k => renderNode(k, false)).join('')}</div>` : ''}
+    </div>`;
+  }
+
+  return `<div class="tree-view">${roots.map(r => renderNode(r, true)).join('')}</div>`;
+}
+
+// Summary
+function renderSummary() {
+  const st = permState();
+  const total = Object.keys(st).length;
+  const on = Object.values(st).filter(Boolean).length;
+  return `<div class="summary-bar">
+    <span class="summary-count">${on}</span> of ${total} permissions enabled
+  </div>`;
+}
+
+// ──────────────── MAIN RENDER ────────────────
+
+function render() {
+  const content = document.getElementById('content');
+  let html = renderSummary();
+  if (activeView === 'category') html += renderCategoryView();
+  else if (activeView === 'search') html += renderSearchView();
+  else if (activeView === 'tree') html += renderTreeView();
+  content.innerHTML = html;
+}
+
+// ──────────────── EVENT WIRING ────────────────
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    render();
+  });
+});
+
+// View switcher
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeView = btn.dataset.view;
+    render();
+  });
+});
+
+// Initial render
+render();
+</script>
+</body>
+</html>
