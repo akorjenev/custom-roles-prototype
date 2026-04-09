@@ -245,6 +245,12 @@ body {
   margin-top: 4px;
 }
 
+.dep-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 .dep-pill {
   font-size: 11px;
   color: var(--text-muted);
@@ -884,7 +890,7 @@ function depsHTML(perm) {
     const enabled = st[r];
     return `<span class="dep-pill${cross ? ' cross-category' : ''}${enabled ? ' enabled' : ''}" onclick="highlightPerm('${r.replace(/'/g, "\\'")}')">${rp.label}</span>`;
   }).filter(Boolean).join('');
-  return `<div class="perm-deps">${pills}</div>`;
+  return `<div class="perm-deps"><span class="dep-label">Requires:</span> ${pills}</div>`;
 }
 
 function permRowHTML(p, showCategory) {
